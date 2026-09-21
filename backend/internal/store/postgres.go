@@ -28,6 +28,49 @@ func NewPostgresStore(host, port, user, password, dbname string) (*PostgresStore
 	return &PostgresStore{db: db}, nil
 }
 
+func NewPostgresStoreFromURL(databaseURL string) (*PostgresStore, error) {
+	db, err := sql.Open("postgres", databaseURL)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := db.Ping(); err != nil {
+		return nil, err
+	}
+
+	store := &PostgresStore{db: db}
+	if err := store.migrate(); err != nil {
+		return nil, err
+	}
+
+	return store, nil
+}
+
+func (s *PostgresStore) migrate() error {
+	query := `
+	CREATE TABLE IF NOT EXISTS urls (
+		id          SERIAL PRIMARY KEY,
+		short_code  VARCHAR(10) UNIQUE NOT NULL,
+		long_url    TEXT NOT NULL,
+		created_at  TIMESTAMP DEFAULT NOW()
+	);
+
+	CREATE TABLE IF NOT EXISTS analytics (
+		id          SERIAL PRIMARY KEY,
+		short_code  VARCHAR(10) REFERENCES urls(short_code),
+		referrer    TEXT,
+		user_agent  TEXT,
+		ip_address  TEXT,
+		clicked_at  TIMESTAMP DEFAULT NOW()
+	);
+
+	CREATE INDEX IF NOT EXISTS idx_short_code ON urls(short_code);
+	CREATE INDEX IF NOT EXISTS idx_analytics_code ON analytics(short_code);
+	`
+	_, err := s.db.Exec(query)
+	return err
+}
+
 func (s *PostgresStore) Close() {
 	s.db.Close()
 }

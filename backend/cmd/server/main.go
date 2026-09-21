@@ -14,14 +14,25 @@ import (
 )
 
 func main() {
-	host := getEnv("DB_HOST", "localhost")
-	port := getEnv("DB_PORT", "5432")
-	user := getEnv("DB_USER", "postgres")
-	password := getEnv("DB_PASSWORD", "postgres123")
-	dbname := getEnv("DB_NAME", "urlshortener")
 	serverPort := getEnv("SERVER_PORT", "8080")
+	databaseURL := getEnv("DATABASE_URL", "")
 
-	db, err := store.NewPostgresStore(host, port, user, password, dbname)
+	var db *store.PostgresStore
+	var err error
+
+	if databaseURL != "" {
+		// Use full connection URL (for Render, Heroku, etc.)
+		db, err = store.NewPostgresStoreFromURL(databaseURL)
+	} else {
+		// Use individual fields (for local development)
+		host := getEnv("DB_HOST", "localhost")
+		port := getEnv("DB_PORT", "5432")
+		user := getEnv("DB_USER", "postgres")
+		password := getEnv("DB_PASSWORD", "postgres123")
+		dbname := getEnv("DB_NAME", "urlshortener")
+		db, err = store.NewPostgresStore(host, port, user, password, dbname)
+	}
+
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}

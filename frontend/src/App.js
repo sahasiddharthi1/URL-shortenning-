@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import './App.css';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+
 function App() {
   const [longUrl, setLongUrl] = useState('');
   const [shortUrl, setShortUrl] = useState('');
@@ -22,7 +24,7 @@ function App() {
     setStats(null);
 
     try {
-      const response = await fetch('http://localhost:8080/api/v1/shorten', {
+      const response = await fetch(`${API_URL}/api/v1/shorten`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -49,7 +51,7 @@ function App() {
     if (!shortCode) return;
 
     try {
-      const response = await fetch(`http://localhost:8080/api/v1/stats/${shortCode}`);
+      const response = await fetch(`${API_URL}/api/v1/stats/${shortCode}`);
       const data = await response.json();
 
       if (!response.ok) {
