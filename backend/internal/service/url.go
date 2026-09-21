@@ -4,19 +4,26 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"url-shortener/internal/models"
 	"url-shortener/internal/store"
 )
 
-const baseURL = "http://localhost:8080"
 const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
 var (
-	ErrInvalidURL   = errors.New("invalid URL")
-	ErrURLNotFound  = errors.New("URL not found")
-	ErrCodeExists   = errors.New("short code already exists")
+	ErrInvalidURL  = errors.New("invalid URL")
+	ErrURLNotFound = errors.New("URL not found")
+	ErrCodeExists  = errors.New("short code already exists")
 )
+
+func getBaseURL() string {
+	if url := os.Getenv("RENDER_EXTERNAL_URL"); url != "" {
+		return url
+	}
+	return "http://localhost:8080"
+}
 
 type URLService struct {
 	store *store.PostgresStore
@@ -41,7 +48,7 @@ func (s *URLService) ShortenURL(longURL string) (*models.ShortenResponse, error)
 	if err == nil {
 		// URL exists → return existing short code
 		return &models.ShortenResponse{
-			ShortURL:  fmt.Sprintf("%s/%s", baseURL, existing.ShortCode),
+			ShortURL:  fmt.Sprintf("%s/%s", getBaseURL(), existing.ShortCode),
 			ShortCode: existing.ShortCode,
 		}, nil
 	}
@@ -64,7 +71,7 @@ func (s *URLService) ShortenURL(longURL string) (*models.ShortenResponse, error)
 	}
 
 	return &models.ShortenResponse{
-		ShortURL:  fmt.Sprintf("%s/%s", baseURL, shortCode),
+		ShortURL:  fmt.Sprintf("%s/%s", getBaseURL(), shortCode),
 		ShortCode: shortCode,
 	}, nil
 }
