@@ -1,0 +1,2 @@
+build: go build -o url-shortener ./cmd/server
+start: ./url-shortener
